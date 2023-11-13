@@ -1,0 +1,52 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Install updates (Ubuntu)
+    apt:
+      upgrade: dist
+      update_cache: yes
+
+  - name: Install docker
+    shell:
+      sudo apt-get install docker.io -y
+
+  - name: Install docker sdk
+    shell:
+      pip install docker-py
+
+  - name: Add docker to group
+    shell:
+      usermod -aG docker angela
+
+  - name: Docker restarting / enabling
+    service:
+      name: docker
+      state: restarted
+      enabled: true
+
+  - name: Create directory
+    file:
+      path: /root/demo-dockerfile
+      state: directory
+      owner: root
+      group: root
+      mode: 0755
+
+  - name: Copy docker
+    copy:
+      src: ./dockerfile
+      dest: /root/demo-dockerfile/dockerfile
+      owner: root
+      group: root
+      mode: 0755
+
+  - name: build container image
+    docker_image:
+      name: HOA11
+      build:
+        path: ./root/demo-dockerfile
+        source: build
+      state: present
