@@ -8,18 +8,36 @@
     apt:
       upgrade: dist
       update_cache: yes
+    when: ansible_distribution == "Ubuntu"
 
-  - name: Install docker
+  - name: Install updates (CentOS)
+    yum:
+      update_only: yes
+      update_cache: yes
+    when: ansible_distribution == "CentOS"
+
+  - name: Install docker (Ubuntu)
     shell:
       sudo apt-get install docker.io -y
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Install docker (CentOS)
+    yum:
+      name: docker
+      state: latest
+    when: ansible_distribution == "CentOS"
 
   - name: Install docker sdk
     shell:
-      pip install docker-py
+      pip3 install docker-py
 
   - name: Add docker to group
     shell:
-      usermod -aG docker angela
+      sudo groupadd docker
+ 
+  - name: Add docker to the current user
+    shell:
+      sudo usermod -aG docker angela
 
   - name: Docker restarting / enabling
     service:
@@ -27,26 +45,21 @@
       state: restarted
       enabled: true
 
-  - name: Create directory
+  - name: create build directory
     file:
       path: /root/demo-dockerfile
+      path: /root/demo-dockerfile2
       state: directory
       owner: root
       group: root
-      mode: 0755
+      mode: '0755'
 
-  - name: Copy docker
+  - name: copy Dockerfile
     copy:
       src: ./dockerfile
+      src: ./dockerfile2
       dest: /root/demo-dockerfile/dockerfile
       owner: root
       group: root
-      mode: 0755
+      mode: '0644'
 
-  - name: build container image
-    docker_image:
-      name: HOA11
-      build:
-        path: ./root/demo-dockerfile
-        source: build
-      state: present
